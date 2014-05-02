@@ -9,7 +9,7 @@ library(car)
 source("~/GMU/Lab/VigilanceSpring2013/TraftonLabPlotting.r")
 
 #read most current data file (change filename)
-EmpericData <- read.csv("~/GMU/Lab/Trust/Spring 2014/trust_overview.4.28.2014_subset.csv")
+EmpericData <- read.csv("~/GMU/Lab/Trust/Spring 2014/Data/trust_overview.4.28.2014_subset.csv")
 
 #histogram of each count variable
 hist(EmpericData$switchcnt_tosound, plot=T)
@@ -41,7 +41,9 @@ EmpericData.clean <- subset(EmpericData,select=c("subject","condition","actual_h
 scatterplotMatrix(~actual_hitrate +actual_falsealarmrate + 
                     averageRT_tosound + noswitchcnt_tosound + 
                     switchcnt_tosound + switchcnt_extra, data=EmpericData.clean,
-                    diagonal="histogram",main="test")
+                    diagonal="histogram",
+                    #groups= condition, by.groups=T, ###not working correctly
+                    main="Correlation Matrix")
 
 cor(EmpericData.clean[,3:9])
 ####example!!
@@ -50,14 +52,18 @@ cor(EmpericData.clean[,3:9])
 #         lower = list(continuous = "smooth", params = c(method = "loess", fill = "blue"))
 # )
 
+
+##ggpairs is very slow
+
+
 ggpairs(EmpericData.clean[,3:9],
                        upper = list(param=c(size=10)),
                        lower = list(continuous = "smooth",param=c(method="loess", fill = "blue")),
-                       diag = list(continuous = "density",discrete="bar")
+                       diag = list(continuous = "density")
                         )
+
 ##don't print scatterplot... it takes way too long 
-ggsave(scatterplot,"~/GMU/Lab/Trust/Spring 2014/graphs/scatterplot matrix - all counts.png")
-print(scatterplot)
+# print(scatterplot)
 #calculate infomration sampling by taking total switches and removing switches due to cue
 #data$info_sampling <- data$totalswitches - data$hitcnt - data$falsealarmcnt
 #plot(summaryBy(info_sampling ~ condition+subject, data=data))
@@ -117,7 +123,7 @@ test[,"totaltrials.mean"] <- round(test[,"totaltrials.mean"],2)
 test
 
 #read the new data in with block information
-dataByBlock <- read.csv("~/GMU/Lab/Trust/Spring 2014/trust_overview.4.28.2014_subset.csv")
+dataByBlock <- read.csv("~/GMU/Lab/Trust/Spring 2014/Data/trust_overview.4.28.2014_subset.csv")
 head(dataByBlock)
 str(dataByBlock)
 
