@@ -109,6 +109,14 @@ plotRT <- plotRT +labs(x= "Hit Rate/False Alarm Rate",y= "Response Time")
 ggsave(plot=plotRT, "~/GMU/Lab/Trust/Spring 2014/Graphs/RT by condition.png")
 print(plotRT)
 
+#response Rate
+plotRR <- ggplot(data = EmpericData, aes(condition, ResponseRatetoCue)) +theme_bw(base_size = 16)
+plotRR <- plotRR + stat_summary(fun.y="mean",geom="bar",fill="dark grey") + 
+  stat_summary(fun.data=mean_cl_boot,geom="errorbar",width=.25)
+plotRR <- plotRR +labs(x= "Hit Rate/False Alarm Rate",y= "Response Rate")
+ggsave(plot=plotRR, "~/GMU/Lab/Trust/Spring 2014/Graphs/RR by condition.png")
+print(plotRR)
+
 #calculate significance
 #Cued switches
 anovaCued <- aov(switchcnt_tosound ~ condition, data=EmpericData.clean)
@@ -220,9 +228,6 @@ EmpericData$ResponseRatetoCue <- (EmpericData$switchcnt_tosound / (EmpericData$h
 mergedByBlock$ResponseRatetoCue <- (mergedByBlock$switchToSound / (mergedByBlock$hitcnt + mergedByBlock$falsealarmcnt))
 
 
-#now that i have reshaped the data and saved it i can wite the temporary dfs if i need memory and just open the file generated at the end
-
-
 #first we should explore the distributions
 hist(mergedByBlock$switchWithNoSound,plot=T) #pousaant
 hist(mergedByBlock$switchToSound,plot=T) #normal
@@ -230,24 +235,33 @@ hist(mergedByBlock$noSwitchToSound,plot=T) #poussant
 
 #these have the same shape as before that's good, i did not mess up the data
 
-#plot
-plotExtra <- ggplot(data = mergedByBlock, aes(Block, switchWithNoSound))
+#plots by block
+##uncued switches
+plotExtra <- ggplot(data = mergedByBlock, aes(Block, switchWithNoSound)) + theme_bw(base_size = 16)
 plotExtra <- plotExtra + stat_summary(fun.y="mean",geom="line") + facet_wrap(~ condition)
+plotExtra <- plotExtra + labs(x="Block",y= "UnCued Switches")
 ggsave(plot=plotExtra, "~/GMU/Lab/Trust/Spring 2014/graphs/Uncued switches by block.png")
 print(plotExtra)
 
-plotToSound <- ggplot(data = mergedByBlock, aes(Block, switchToSound))
+
+##cued switches
+plotToSound <- ggplot(data = mergedByBlock, aes(Block, switchToSound))+ theme_bw(base_size = 16)
 plotToSound <- plotToSound + stat_summary(fun.y="mean",geom="line") + facet_wrap(~ condition)
+plotToSound <- plotToSound +labs(x="Block", y="Cued Switches")
 ggsave(plot=plotToSound, "~/GMU/Lab/Trust/Spring 2014/graphs/Cued Switchs by block.png")
 print(plotToSound)
 
-plotNoSwitch <- ggplot(data = mergedByBlock, aes(Block, noSwitchToSound))
+##ignored Cues
+plotNoSwitch <- ggplot(data = mergedByBlock, aes(Block, noSwitchToSound)) + theme_bw(base_size=16)
 plotNoSwitch <- plotNoSwitch + stat_summary(fun.y="mean",geom="line") + facet_wrap(~ condition)
+plotNoSwitch <- plotNoSwitch + labs(x="Block",y="Ignored Cues")
 ggsave(plot=plotNoSwitch, "~/GMU/Lab/Trust/Spring 2014/graphs/Ignored Cues by Block.png")
 print(plotNoSwitch)
 
-plotRT <- ggplot(data = mergedByBlock, aes(Block, RTimeToSound))
+##Response time
+plotRT <- ggplot(data = mergedByBlock, aes(Block, RTimeToSound)) + theme_bw(base_size=16)
 plotRT <- plotRT + stat_summary(fun.y="mean",geom="line") + facet_wrap(~ condition)
+plotRT <- plotRT + labs(x="Block",y="Response Time")
 ggsave(plot=plotRT, "~/GMU/Lab/Trust/Spring 2014/graphs/RT by block.png")
 print(plotRT)
 
