@@ -9,7 +9,7 @@ library(car)
 source("~/GMU/Lab/VigilanceSpring2013/TraftonLabPlotting.r")
 
 #read most current data file (change filename)
-EmpericData <- read.csv("~/GMU/Lab/Trust/Spring 2014/trust_overview.4.28.2014_subset.csv")
+EmpericData <- read.csv("~/GMU/Lab/Trust/Spring 2014/Data/trust_overview.4.28.2014_subset.csv")
 
 #histogram of each count variable
 hist(EmpericData$switchcnt_tosound, plot=T)
@@ -38,7 +38,7 @@ EmpericData.clean <- subset(EmpericData,select=c("subject","condition","actual_h
                                           "noswitchcnt_tosound","switchcnt_tosound","switchcnt_extra"))
 
 # Scatterplot Matrices from the car Package
-scatterplotMatrix(~actual_hitrate +actual_falsealarmrate + 
+scatterplotMatrix(~ condition + 
                     averageRT_tosound + noswitchcnt_tosound + 
                     switchcnt_tosound + switchcnt_extra, data=EmpericData.clean,
                     diagonal="histogram",main="test")
@@ -56,56 +56,90 @@ ggpairs(EmpericData.clean[,3:9],
                        diag = list(continuous = "density",discrete="bar")
                         )
 ##don't print scatterplot... it takes way too long 
-ggsave(scatterplot,"~/GMU/Lab/Trust/Spring 2014/graphs/scatterplot matrix - all counts.png")
-print(scatterplot)
+#ggsave(scatterplot,"~/GMU/Lab/Trust/Spring 2014/graphs/scatterplot matrix - all counts.png")
+#print(scatterplot)
 #calculate infomration sampling by taking total switches and removing switches due to cue
 #data$info_sampling <- data$totalswitches - data$hitcnt - data$falsealarmcnt
 #plot(summaryBy(info_sampling ~ condition+subject, data=data))
 
 #investigate switching behavior 
-summaryBy(switchcnt_extra + switchcnt_tosound + noswitchcnt_tosound ~ condition, data=EmpericData)
-
+summaryBy(switchcnt_extra + switchcnt_tosound + noswitchcnt_tosound ~ condition, data=EmpericData.clean)
+View(EmpericData.clean)
 #plot
 #uncued switches
-plotExtra <- ggplot(data = EmpericData, aes(condition, switchcnt_extra))
-plotExtra <- plotExtra + geom_boxplot()
+plotExtra <- ggplot(data = EmpericData, aes(condition, switchcnt_extra)) + theme_bw(base_size = 16)
+plotExtra <- plotExtra + stat_summary(fun.y="mean",geom="bar",fill="dark grey") + 
+                          stat_summary(fun.data=mean_cl_boot,geom="errorbar",width=.25)
+plotExtra  <- plotExtra +labs(x= "Hit Rate/False Alarm Rate",y= "UnCued Switches")
 ggsave(plot=plotExtra,"~/GMU/Lab/Trust/Spring 2014/Graphs/unCuedSwitches by condition.png")
 print(plotExtra)
 
 #cued switches
-plotToSound <- ggplot(data = EmpericData, aes(condition, switchcnt_tosound))
-plotToSound <- plotToSound + geom_boxplot()
+plotToSound <- ggplot(data = EmpericData, aes(condition, switchcnt_tosound)) + theme_bw(base_size = 16)
+plotToSound <- plotToSound + stat_summary(fun.y="mean",geom="bar",fill="dark grey") + 
+                              stat_summary(fun.data=mean_cl_boot,geom="errorbar",width=.25)
+plotToSound  <- plotToSound +labs(x= "Hit Rate/False Alarm Rate",y= "Cued Switches")
 ggsave(plot=plotToSound, "~/GMU/Lab/Trust/Spring 2014/Graphs/CuedSwitches by condition.png")
 print(plotToSound)
 
 #ignored cues
-plotNoSwitch <- ggplot(data = EmpericData, aes(condition, noswitchcnt_tosound))
-plotNoSwitch <- plotNoSwitch + geom_boxplot()
-ggsave(plot=plotNoSwitch, "~/GMU/Lab/Trust/Spring 2014/Graphs/NoSwitch by condition.png")
+plotNoSwitch <- ggplot(data = EmpericData, aes(condition, noswitchcnt_tosound)) + theme_bw(base_size = 16)
+plotNoSwitch <- plotNoSwitch + stat_summary(fun.y="mean",geom="bar",fill="dark grey") + 
+                              stat_summary(fun.data=mean_cl_boot,geom="errorbar",width=.25)
+plotNoSwitch <- plotNoSwitch +labs(x= "Hit Rate/False Alarm Rate",y= "Ignored Cues")
+ggsave(plot=plotNoSwitch, "~/GMU/Lab/Trust/Spring 2014/Graphs/No Switch by Condition.png")
 print(plotNoSwitch)
+
 #reaction time
-plotRT <- ggplot(data = EmpericData, aes(condition, averageRT_tosound))
-plotRT <- plotRT + geom_boxplot()
+plotRT <- ggplot(data = EmpericData, aes(condition, averageRT_tosound)) +theme_bw(base_size = 16)
+plotRT <- plotRT + stat_summary(fun.y="mean",geom="bar",fill="dark grey") + 
+                  stat_summary(fun.data=mean_cl_boot,geom="errorbar",width=.25)
+plotRT <- plotRT +labs(x= "Hit Rate/False Alarm Rate",y= "Response Time")
 ggsave(plot=plotRT, "~/GMU/Lab/Trust/Spring 2014/Graphs/RT by condition.png")
 print(plotRT)
+
 #calculate significance
-anovaCued <- aov(switchcnt_tosound ~ condition, data=EmpericData)
-summary(anovaCued)
-10934/(10934+11352)
+#Cued switches
+anovaCued <- aov(switchcnt_tosound ~ condition, data=EmpericData.clean)
+summary(anovaCued) ###significant 
 TukeyHSD(anovaCued)
 
-anovaUnCued <- aov(switchcnt_extra ~ condition, data=EmpericData)
-summary(anovaUnCued)
+glmCued <- glm(switchcnt_tosound ~ actual_hitrate + actual_falsealarmrate, 
+               data=EmpericData.clean, family="poisson")
+#glmCued <- glm(switchcnt_tosound ~ condition, data=EmpericData.clean, family="poisson")
+summary(glmCued) ###significant
+
+#Uncued Switches
+anovaUnCued <- aov(switchcnt_extra ~ condition, data=EmpericData.clean)
+summary(anovaUnCued)###significant
 TukeyHSD(anovaUnCued)
 
-anovaRT <- aov(averageRT_tosound ~ condition, data=EmpericData)
-summary(anovaRT)
+glmUncued <- glm(switchcnt_extra ~ actual_hitrate + actual_falsealarmrate,
+                 data=EmpericData.clean, family="poisson" ) ### Weird, i'm not sure how to interpret this
 
-anovaIgnore <- aov(noswitchcnt_tosound ~ condition, data=EmpericData)
-summary(anovaIgnore)
+#glmUncued <- glm(switchcnt_extra ~ condition,data=EmpericData.clean, family="poisson" )
+summary(glmUncued)##signtificant
 
-newLM <- glm(noswitchcnt_tosound ~ intended_hitrate + intended_falsealarmrate, EmpericData,family="poisson" )
-summary(newLM)
+#response time
+anovaRT <- aov(averageRT_tosound ~ condition, data=EmpericData.clean)
+summary(anovaRT)##non-significant
+
+glmRT  <-  glm(averageRT_tosound ~ actual_hitrate + actual_falsealarmrate, data=EmpericData.clean, family="poisson")
+#glmRT  <-  glm(averageRT_tosound ~ condition, data=EmpericData.clean, family="poisson")
+summary(glmRT)## signficant 
+##throws some warnings because the values of RT are nto integers? 
+#is this important for poisson distribution?
+
+#ignored cues
+anovaIgnore <- aov(noswitchcnt_tosound ~ condition, data=EmpericData.clean)
+summary(anovaIgnore) #no signficance
+
+glmIgnored <- glm(noswitchcnt_tosound ~ actual_hitrate + actual_falsealarmrate, data =EmpericData.clean, family="poisson")
+
+#glmIgnored <- glm(noswitchcnt_tosound ~ condition, data =EmpericData.clean, family="poisson")
+summary(glmIgnored) ##signficant when using condition
+                    ###marginal when using hitrate and false alarm rate
+
 # #setup to replace missing condition from errors
 # missing <- sample(c("C","A","A","B","D","B","A"))
 # missing     
