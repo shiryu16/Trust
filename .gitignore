@@ -1,6 +1,8 @@
 .Rproj.user
 .Rhistory
 .RData
+<<<<<<< HEAD
+=======
 Thumbs.db
 test.pdf
 test.txt
@@ -12,3 +14,4 @@ Fall 2013
 Corel Auto-Preserve
 Readings
 Participant_List.csv
+>>>>>>> 67d46241c23e67bd86ce233540fbf4df6f786c9e
