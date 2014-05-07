@@ -45,6 +45,13 @@ scatterplotMatrix(~ condition +
                     #groups= condition, by.groups=T, ###not working correctly
                     main="Correlation Matrix")
 
+scatterplotMatrix(~ hitcnt + falsealarmcnt+ misscnt+
+                    averageRT_tosound + noswitchcnt_tosound + 
+                    switchcnt_tosound + switchcnt_extra, data=EmpericData,
+                  diagonal="histogram",
+                  #groups= condition, by.groups=T, ###not working correctly
+                  main="Correlation Matrix for individual alarms")
+
 cor(EmpericData.clean[,3:9])
 ####example!!
 # ggpairs(df, 
@@ -142,6 +149,7 @@ summary(glmUncued)##signtificant
 #response time
 anovaRT <- aov(averageRT_tosound ~ condition, data=EmpericData.clean)
 summary(anovaRT)##non-significant
+###tried with log transformed but it's still not significant
 
 glmRT  <-  glm(averageRT_tosound ~ actual_hitrate + actual_falsealarmrate, data=EmpericData.clean, family="poisson")
 #glmRT  <-  glm(averageRT_tosound ~ condition, data=EmpericData.clean, family="poisson")
@@ -153,9 +161,9 @@ summary(glmRT)## signficant
 anovaIgnore <- aov(noswitchcnt_tosound ~ condition, data=EmpericData.clean)
 summary(anovaIgnore) #no signficance
 
-glmIgnored <- glm(noswitchcnt_tosound ~ actual_hitrate + actual_falsealarmrate, data =EmpericData.clean, family="poisson")
-
-#glmIgnored <- glm(noswitchcnt_tosound ~ condition, data =EmpericData.clean, family="poisson")
+glmIgnored <- glm(noswitchcnt_tosound ~ actual_hitrate, data =EmpericData.clean, family="poisson")
+summary(glmIgnored)
+glmIgnored <- glm(noswitchcnt_tosound ~ condition, data =EmpericData.clean, family="poisson")
 summary(glmIgnored) ##signficant when using condition
                     ###marginal when using hitrate and false alarm rate
 
@@ -223,7 +231,7 @@ mergedByBlock$condition <- paste(mergedByBlock$intended_hitrate, "/",mergedByBlo
 mergedByBlock$condition <- factor(mergedByBlock$condition)
 summary(mergedByBlock)
 View(mergedByBlock)
-#write.csv(mergedByBlock, file = "trust_overview_1_9_2014_withBlocks.csv")
+write.csv(EmpericData, file = "EmpericData.csv")
 EmpericData$ResponseRatetoCue <- (EmpericData$switchcnt_tosound / (EmpericData$hitcnt + EmpericData$falsealarmcnt))
 mergedByBlock$ResponseRatetoCue <- (mergedByBlock$switchToSound / (mergedByBlock$hitcnt + mergedByBlock$falsealarmcnt))
 
@@ -314,3 +322,5 @@ mean(EmpericData$ResponseRatetoCue)
 # balance <- c("B","B","B","B","B","D","D","D")
 # balance$order <- sample(balance)
 # balance$order
+test.rt <- EmpericData$averageRT_tosound
+str(EmpericData)
