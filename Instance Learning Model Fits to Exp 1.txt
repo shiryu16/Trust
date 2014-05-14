@@ -1,0 +1,25 @@
+ans = 0.2 || Switches to Sound r^2 =  0.9851775 RMSD =  4.590085
+  Number of model points in CI for 0.2 =  4 *************
+ans = 0.2 || Switches to No Sound r^2 =  -0.1217277 RMSD =  36.77258
+  Number of model points in CI for 0.2 =  0
+
+ans = 0.3 || Switches to Sound r^2 =  0.989892 RMSD =  4.173112
+  Number of model points in CI for 0.3 =  4 *************
+ans = 0.3 || Switches to No Sound r^2 =  -0.0344413 RMSD =  36.22776
+  Number of model points in CI for 0.3 =  0
+
+ans = 0.4 || Switches to Sound r^2 =  0.983512 RMSD =  4.742724
+  Number of model points in CI for 0.4 =  4 *************
+ans = 0.4 || Switches to No Sound r^2 =  -0.5457038 RMSD =  30.93792
+  Number of model points in CI for 0.4 =  0
+
+ans = 0.5 || Switches to Sound r^2 =  0.9866022 RMSD =  4.377962
+  Number of model points in CI for 0.5 =  4 *************
+ans = 0.5 || Switches to No Sound r^2 =  -0.194956 RMSD =  18.66615
+  Number of model points in CI for 0.5 =  3 +++++++++++++
+
+ans = 0.6 || Switches to Sound r^2 =  0.9910632 RMSD =  3.828639
+  Number of model points in CI for 0.6 =  4 *************
+ans = 0.6 || Switches to No Sound r^2 =  -0.1347339 RMSD =  8.706921
+  Number of model points in CI for 0.6 =  4 *************
+
