@@ -1,3 +1,4 @@
+
 #Data Analysis File for Trust Study. 
 #get important packages
 library(plyr)
@@ -70,12 +71,9 @@ ggpairs(EmpericData.clean[,3:9],
                         )
 
 ##don't print scatterplot... it takes way too long 
-<<<<<<< HEAD
 #ggsave(scatterplot,"~/GMU/Lab/Trust/Spring 2014/graphs/scatterplot matrix - all counts.png")
 #print(scatterplot)
-=======
 # print(scatterplot)
->>>>>>> 4edc4006059f105d25afc02ba1500f6f2012d2fe
 #calculate infomration sampling by taking total switches and removing switches due to cue
 #data$info_sampling <- data$totalswitches - data$hitcnt - data$falsealarmcnt
 #plot(summaryBy(info_sampling ~ condition+subject, data=data))
