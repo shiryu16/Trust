@@ -159,11 +159,14 @@ summary(glmRT)## signficant
 anovaIgnore <- aov(noswitchcnt_tosound ~ condition, data=EmpericData.clean)
 summary(anovaIgnore) #no signficance
 
-glmIgnored <- glm(noswitchcnt_tosound ~ actual_hitrate, data =EmpericData.clean, family="poisson")
+glmIgnored <- glm(noswitchcnt_tosound ~ actual_hitrate * actual_falsealarmrate, data =EmpericData.clean, family="poisson")
 summary(glmIgnored)
+###significant when using hitrate and false alarm rate -coeff
+###the interaction of TPR and FPR is significant  +coeff
+##i interpret this to mean that false alarm rate effect is suppressed by the overall alarm rate. 
+
 glmIgnored <- glm(noswitchcnt_tosound ~ condition, data =EmpericData.clean, family="poisson")
 summary(glmIgnored) ##signficant when using condition
-                    ###marginal when using hitrate and false alarm rate
 
 # #setup to replace missing condition from errors
 # missing <- sample(c("C","A","A","B","D","B","A"))
@@ -322,3 +325,6 @@ mean(EmpericData$ResponseRatetoCue)
 # balance$order
 test.rt <- EmpericData$averageRT_tosound
 str(EmpericData)
+
+
+##analyze the block data by participant in order to identify if later participants are in fact driving the abnormallities
