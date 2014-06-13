@@ -204,28 +204,99 @@ head(bestfit)
 #read the block file
 modelLispByID  <- read.csv("~/GMU/Lab/Trust/Spring 2014/Data/Utility_Learning_byBlock_processed.csv")
 str(modelLispByID)
-unique(modelLispByID$ID)
 
-test <- subset(modelLispByID, subset= ID < 4)
-
+#####################################################################################
+###### THIS FUNCTION IS NOW USELESS AS IT'S PURPOSE IS FULFILLED THROUGH THE PYTHON SCRIPT
+###### CHANGE DUE TO VERY SLOW PROCESSING IN R. FASTER TO PROCESS IN PYTHON
 
 ###for each subject separate the blocks then add it to the overall df
-addBlocks <- function(original.df){
-  finalFrame  <- original.df[0,] # make an empty df with the headers
-for (subj in unique(original.df$ID)){
-  temp.df  <-  subset(original.df, subset= ID==subj) #separate each set of subjects
-  totalTime  <- temp.df$time[length(temp.df$time)] #find out that subjects total time
-  block_Delimeter  <- totalTime/4 #divide that time into 4 
-  temp.df$block <- ifelse(temp.df$time > block_Delimeter*3, 4, #if it's greater than 3 times the delimeter it's block 4
-         ifelse(temp.df$time > block_Delimeter*2, 3, #to block 3
-                ifelse(temp.df$time > block_Delimeter, 2, #to block 2
-                       ifelse(temp.df$time < block_Delimeter,1,
-                              NA)))) #if it's not one of the first 3 blocks then it's block 4
-  finalFrame <- rbind(finalFrame,temp.df)
-  }
-return(finalFrame)
-}
+# addBlocks <- function(original.df){
+#   finalFrame  <- original.df[0,] # make an empty df with the headers
+# for (subj in unique(original.df$ID)){
+#   temp.df  <-  subset(original.df, subset= ID==subj) #separate each set of subjects
+#   totalTime  <- temp.df$time[length(temp.df$time)] #find out that subjects total time
+#   block_Delimeter  <- totalTime/4 #divide that time into 4 
+#   temp.df$block <- ifelse(temp.df$time > block_Delimeter*3, 4, #if it's greater than 3 times the delimeter it's block 4
+#          ifelse(temp.df$time > block_Delimeter*2, 3, #to block 3
+#                 ifelse(temp.df$time > block_Delimeter, 2, #to block 2
+#                        ifelse(temp.df$time < block_Delimeter,1,
+#                               NA)))) #if it's not one of the first 3 blocks then it's block 4
+#   finalFrame <- rbind(finalFrame,temp.df)
+#   }
+# return(finalFrame)
+# }
+# 
+# #This generates the block data. It takes about 2 hours to run
+# modelLispbyBlock <- addBlocks(modelLispByID)
 
-modelLispbyBlock <- addBlocks(modelLispByID)
+#write to a csv so i don't have to redo the blocks
+#write.csv(modelLispbyBlock,"~/GMU/Lab/Trust/Spring 2014/Data/Utility_Learning_processed_with_Blocks.csv")
+
+######### END OUTDATED FUNCTION
+#################################################################################
 
 
+#add conditions
+modelLispByID$condition <- paste(modelLispByID$TPR,"/",modelLispByID$FPR)
+modelLispByID$condition <- as.factor(modelLispByID$condition)
+#I need to summarize the data so that there are 4 data points per ID
+#this will emulate the data from participants
+summary(modelLispByID$condition)
+#i have to first be able to count the switches. 
+modelLispByID$switchcnt_tosound <- ifelse(modelLispByID$action=="WAIT",1,0)
+modelLispByID$switchcnt_extra <- ifelse(modelLispByID$action=="SWITCH",1,0)
+
+#now that i have the counts for each trial, i should summarize to smaller dataset
+model_Utility_byBlock <- ddply(.data=modelLispByID,.variables=.(ID,condition,Block,red_reward,blue_reward,egs),
+                               summarize,switchcnt_tosound=sum(switchcnt_tosound),
+                               switchcnt_extra=sum(switchcnt_extra))
+#model_Utility_byBlock <- summaryBy(switchcnt_tosound + switchcnt_extra ~ ID+condition+block+red_reward+blue_reward+egs,data=modelLispByID,FUN=c(sum))
+
+str(model_Utility_byBlock)
+summary(model_Utility_byBlock)
+
+total_Utility_byBlock <- ddply(.data=model_Utility_byBlock,.(ID,condition,red_reward,blue_reward,egs),
+                               summarize,switchcnt_tosound=sum(switchcnt_tosound),
+                               switchcnt_extra=sum(switchcnt_extra))
+#total_Utility_byBlock <- summaryBy(switchcnt_tosound+switchcnt_extra~ID+condition+red_reward+blue_reward+egs,data=modelLispByID,FUN=sum)
+str(total_Utility_byBlock)
+
+#matrix of graphs of parameter space
+overlay_to_sound <- ggplot(ExpData, aes(x=factor(condition),y=switchcnt_tosound)) + theme_bw(base_size = 18)
+overlay_to_sound <- overlay_to_sound + stat_summary(fun.y="mean", geom="bar",fill="dark grey")
+overlay_to_sound <- overlay_to_sound + stat_summary(fun.data=mean_cl_boot, geom="errorbar", width = .25)
+overlay_to_sound <- overlay_to_sound + stat_summary(data=total_Utility_byBlock, aes(x=condition,y=switchcnt_tosound,group=egs,colour=factor(egs)),fun.y="mean",geom="line")
+overlay_to_sound <- overlay_to_sound + facet_grid(red_reward ~ blue_reward,labeller=label_both)  + labs(title="noWaitreward-:u2 Cued Switches", y="Cued Switches", x="Condition")
+print(overlay_to_sound)
+ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/CS -red-blue-egs-nowait-u2-fittedto67.png",height=9,width=16,dpi=300)
+
+##NOtes:
+# it seems that red-reward and blue-reward do absolutely nothing in terms of chaning the model. 
+# The only parameter that seems to be affecting the behavior is egs. And only for Uncued Switches. 
+# Cued switches seems to be sensitive only to the number of trials participants actually went through.
+# > summaryBy(totaltrials~condition, ExpData)
+# condition totaltrials.mean
+# 1    67 / 3         127.2353
+# 2    75 / 5         138.8235
+# 3   85 / 10         139.3529
+# 4   91 / 15         143.8235
+
+# Participants in the 67/3 condition go trhough 10 less trials than the other participants.
+# currently i've been using the overall average number of trials (and that is what i did last semester)
+# Should i use the average for each condition instead? Is that overfitting? 
+
+ExpData$condition <- as.factor(ExpData$condition)
+
+contrasts(ExpData$condition) <- contr.sum(4)
+contrasts(ExpData$condition)
+summary(lm(totaltrials~condition,ExpData))
+## this model would suggest that the total trials that people in the 67/3 condition go through is 
+## less than those in the other conditions. 
+
+overlay_Uncued <- ggplot(ExpData, aes(x=factor(condition),y=switchcnt_extra)) + theme_bw(base_size = 18)
+overlay_Uncued <- overlay_Uncued + stat_summary(fun.y="mean", geom="bar",fill="dark grey")
+overlay_Uncued <- overlay_Uncued + stat_summary(fun.data=mean_cl_boot, geom="errorbar", width = .25)
+overlay_Uncued <- overlay_Uncued + stat_summary(data=total_Utility_byBlock, aes(x=condition,y=switchcnt_extra,group=egs,colour=factor(egs)),fun.y="mean",geom="line")
+overlay_Uncued <- overlay_Uncued + facet_grid(red_reward ~ blue_reward,labeller=label_both)  + labs(title="noWaitreward-:u2 Uncued Switches", y="UnCued Switches", x="Condition")
+print(overlay_Uncued)
+ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/test2.png",height=9,width=16,dpi=300)
