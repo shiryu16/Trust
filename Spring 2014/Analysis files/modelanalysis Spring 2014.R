@@ -1,6 +1,12 @@
 require(ggplot2)
 require(doBy)
+require(plyr)
 #read the model data
+
+
+#############################
+####This section analyses different models to be able to compare their fits
+
 #model with wait reward given through lisp with punishment for blue box
 ModelLisp <- read.csv("~/GMU/Lab/Trust/Model/reward-via-lisp.csv")
 #model with wait reward given through lisp but no punishment for blue box
@@ -67,8 +73,8 @@ overlay_to_no_sound  <- overlay_to_no_sound + stat_summary(fun.data=mean_cl_boot
 #Now overlay the graphs with the model data
 overlay_to_sound <- overlay_to_sound + stat_summary(data=ModelLisp, aes(x=condition,y=switchcnt_tosound, group=RED_REWARD),fun.y="mean",geom="line",colour="red")
 overlay_to_sound <- overlay_to_sound + facet_grid(RED_REWARD ~ BLUE_REWARD,labeller=label_both)  + labs(title="CS_w_Blue_punish_via_lisp", y="Cued Switches")
-ggsave(overlay_to_sound, "~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/param_explore_CS_w_Blue_punish_via_lisp.png")
 print(overlay_to_sound)
+ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/param_explore_CS_w_Blue_punish_via_lisp.png")
 
 overlay_to_no_sound <- overlay_to_no_sound + stat_summary(data=ModelLisp, aes(x=condition,y=switchcnt_extra, group=RED_REWARD),fun.y="mean",geom="line",colour="red")
 overlay_to_no_sound  <- overlay_to_no_sound + facet_grid(RED_REWARD ~ BLUE_REWARD,labeller=label_both) + labs(title="US_w_Blue_punish_via_lisp", y= "Uncued Switches")
@@ -129,44 +135,42 @@ CalculateFits <- function(modeldf, expdf, path) {
     dummyblue <- subset(modeldf, blue_reward==blue)
     #nest the loop for each RED_Reward
     for(red in unique(dummyblue$red_reward)){
-        dummyRed <- subset(dummyblue,red_reward==red)
-        #nest again for each condition
-        for(EGS in unique(dummyRed$egs)){
-            dummyegs <- subset(dummyRed,egs==EGS)
-#this sub-section calculates the fits for the switch_cnt variable
-            cat("blue_reward =", blue, " Red Reward =", red, " EGS =", EGS, "Switches to Sound",
-                "r^2 = ",cor(dummyegs$switchcnt_tosound.mean,expdf$switchcnt_tosound.mean),
-                "RMSD = ", rmsd(dummyegs$switchcnt_tosound.mean,expdf$switchcnt_tosound.mean),
-                fill=T)
-            GoodFits <- InRange(dummyegs$switchcnt_tosound.mean, expdf$switchcnt_tosound.mean - expdf$toSound.ci, 
-                                expdf$switchcnt_tosound.mean + expdf$toSound.ci)
-            cat("  Number of model points in CI for", blue,"/",red,"/",EGS,"= ", GoodFits)
+      dummyRed <- subset(dummyblue,red_reward==red)
+      #nest again for each condition
+      for(EGS in unique(dummyRed$egs)){
+        dummyegs <- subset(dummyRed,egs==EGS)
+          #this sub-section calculates the fits for the switch_cnt variable
+          cat("blue_reward =", blue, " Red Reward =", red, " EGS =", EGS, "Switches to Sound",
+              "r^2 = ",cor(dummyegs$switchcnt_tosound.mean,expdf$switchcnt_tosound.mean),
+              "RMSD = ", rmsd(dummyegs$switchcnt_tosound.mean,expdf$switchcnt_tosound.mean),
+              fill=T)
+          GoodFits <- InRange(dummyegs$switchcnt_tosound.mean, expdf$switchcnt_tosound.mean - expdf$toSound.ci, 
+                              expdf$switchcnt_tosound.mean + expdf$toSound.ci)
+          cat("  Number of model points in CI for", blue,"/",red,"/",EGS,"= ", GoodFits)
           if (GoodFits == 4)
             cat(" *************")
           if (GoodFits == 3)
             cat(" +++++++++++++")
           cat(fill=T)
-#this subsection calculates the fits for the extra switches
-          cat("blue_reward =", blue, " Red Reward =", red, " EGS =",EGS, "Switches to No Sound",
-                "r^2 = ",cor(dummyegs$switchcnt_extra.mean,expdf$switchcnt_extra.mean),
-                "RMSD = ", rmsd(dummyegs$switchcnt_extra.mean,expdf$switchcnt_extra.mean),
-                fill=T)
+          #this subsection calculates the fits for the extra switches
+          cat("blue_reward =", blue, " Red Reward =", red, " EGS =",EGS,"Switches to No Sound",
+              "r^2 = ",cor(dummyegs$switchcnt_extra.mean,expdf$switchcnt_extra.mean),
+              "RMSD = ", rmsd(dummyegs$switchcnt_extra.mean,expdf$switchcnt_extra.mean),
+              fill=T)
           GoodFits <- InRange(dummyegs$switchcnt_extra.mean, expdf$switchcnt_extra.mean - expdf$to.noSound.ci, 
                               expdf$switchcnt_extra.mean + expdf$to.noSound.ci)
           cat("  Number of model points in CI for", blue,"/",red,"/",EGS,"= ", GoodFits)
           if (GoodFits == 4)
-              cat(" *************")
+            cat(" *************")
           if (GoodFits == 3)
-              cat(" +++++++++++++")
+            cat(" +++++++++++++")
           cat(fill=T)
           cat(fill=T)
-        }
+      }
     }
-  }
-  
+  } 
 }
-
-testfits <- CalculateFits(ModelData_means,ExpData_means,"~/GMU/Lab/Trust/Spring 2014/Analysis files/Spr14_fits_w_punish_via_Lisp.txt")
+testfits <- CalculateFits(ModelData_means,ExpData_means,"~/GMU/Lab/Trust/Spring 2014/Analysis files/Spr14_fits_trials by condition used.txt")
 sink()
 
 #overlay graphs to emperical data this time only use the best fit 
@@ -319,12 +323,12 @@ ModelData_means$toSound.ci <- 2 * ModelData_means$switchcnt_tosound.sd / sqrt(17
 ExpData_means$to.noSound.ci <- 2 * ExpData_means$switchcnt_extra.sd / sqrt(17)
 ModelData_means$to.noSound.ci <- 2 * ModelData_means$switchcnt_extra.sd / sqrt(17)
 
-testfits <- CalculateFits(ModelData_means,ExpData_means,"~/GMU/Lab/Trust/Spring 2014/Analysis files/Spr14_fits_nowait_u2_red--blue--egs.txt")
+testfits <- CalculateFits(ModelData_means,ExpData_means,"~/GMU/Lab/Trust/Spring 2014/Analysis files/Spr14_fits_nowait_u2_red--blue--egs - totaltrials by condition.txt")
 sink()
 #### The fits output determines that egs=.4, blue= -14, red=14 is the best fit
 
 ###pull out the best fits and use it to generate the graph
-bestfit <- subset(ModelData_means, subset= blue_reward == -14 & red_reward == 14)
+bestfit <- subset(ModelData_means, subset= blue_reward == -6 & red_reward == 14)
 bestfit <- subset(bestfit,subset=egs==.4)
 str(bestfit)
 
@@ -332,14 +336,174 @@ overlay_to_sound <- ggplot(ExpData, aes(x=condition,y=switchcnt_tosound)) + them
 overlay_to_sound <- overlay_to_sound + stat_summary(fun.y="mean", geom="bar",fill="dark grey")
 overlay_to_sound <- overlay_to_sound + stat_summary(fun.data=mean_cl_boot, geom="errorbar", width = .25)
 overlay_to_sound <- overlay_to_sound + geom_point(data=bestfit, aes(y=switchcnt_tosound.mean, x= factor(condition)),size=4)
-overlay_to_sound <- overlay_to_sound + labs(title="BestFits noWait-:u2 - blue:-14 red:14 egs.4",y="Cued Switches", x="Condition")
+overlay_to_sound <- overlay_to_sound + labs(title="BestFits noWait-:u2 - blue:-6 red:14 egs.4",y="Cued Switches", x="Condition")
 print(overlay_to_sound)
-ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/BestFits CS noWait-u2 - blue-neg14 red-14 egs-point4.png",height=9,width=16,dpi=300)
+ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/BestFits CS noWait-u2 - blue-neg6 red-14 egs-point4.png",height=9,width=16,dpi=300)
 
 overlay_Uncued <- ggplot(ExpData, aes(x=factor(condition),y=switchcnt_extra)) + theme_bw(base_size = 18)
 overlay_Uncued <- overlay_Uncued + stat_summary(fun.y="mean", geom="bar",fill="dark grey")
 overlay_Uncued <- overlay_Uncued + stat_summary(fun.data=mean_cl_boot, geom="errorbar", width = .25)
 overlay_Uncued <- overlay_Uncued + geom_point(data=bestfit, aes(y=switchcnt_extra.mean, x= factor(condition)),size=4)
-overlay_Uncued <- overlay_Uncued + labs(title="BestFits noWait-:u2 - blue:-14 red:14 egs.4", y="UnCued Switches", x="Condition")
+overlay_Uncued <- overlay_Uncued + labs(title="BestFits noWait-:u2 - blue:-6 red:14 egs.4", y="UnCued Switches", x="Condition")
 print(overlay_Uncued)
-ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/BestFits US noWait-u2 - blue-neg14 red-14 egs-point4.png",height=9,width=16,dpi=300)
+ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/BestFits US noWait-u2 - blue-neg6 red-14 egs-point4.png",height=9,width=16,dpi=300)
+
+####begin setting up block analysis 
+###need to get the means for the ExpData by block
+str(ExpData)
+Uncued_dataByBlock <- reshape(ExpData, varying = c("switchcnt_extra_1","switchcnt_extra_2","switchcnt_extra_3","switchcnt_extra_4"),
+                             v.names= "UncuedSwitch",
+                             timevar ="Block", times=c(1,2,3,4),direction = "long")
+
+Cued_dataByBlock <- reshape(ExpData, varying = c("switchcnt_tosound_1","switchcnt_tosound_2","switchcnt_tosound_3","switchcnt_tosound_4"),
+                               v.names= "CuedSwitch",
+                               timevar ="Block", times=c(1,2,3,4),direction = "long")
+
+Ignored_dataByBlock <- reshape(ExpData, varying = c("noswitchcnt_tosound_1","noswitchcnt_tosound_2","noswitchcnt_tosound_3","noswitchcnt_tosound_4"),
+                                 v.names= "noSwitchToSound",
+                                 timevar ="Block", times=c(1,2,3,4),direction = "long")
+
+RT_dataByBlock <- reshape(ExpData, varying = c("averageRT_tosound_1","averageRT_tosound_2","averageRT_tosound_3","averageRT_tosound_4"),
+                          v.names= "RTimeToSound",
+                          timevar ="Block", times=c(1,2,3,4),direction = "long")
+hitcnt_dataByBlock <- reshape(ExpData, varying = c("hitcnt_1","hitcnt_2","hitcnt_3","hitcnt_4"),
+                              v.names= "alarmHits",
+                              timevar ="Block", times=c(1,2,3,4),direction = "long")
+
+misscnt_dataByBlock <- reshape(ExpData, varying = c("misscnt_1","misscnt_2","misscnt_3","misscnt_4"),
+                               v.names= "alarmMisses",
+                               timevar ="Block", times=c(1,2,3,4),direction = "long")
+
+facnt_dataByBlock <- reshape(ExpData, varying = c("falsealarmcount_1","falsealarmcount_2","falsealarmcount_3","falsealarmcount_4"),
+                             v.names= "alarmFA",
+                             timevar ="Block", times=c(1,2,3,4),direction = "long")
+
+merged1 <- merge(Uncued_dataByBlock,Cued_dataByBlock)
+merged1 <- merge(merged1,Ignored_dataByBlock)
+merged1 <- merge(merged1,RT_dataByBlock)
+merged1 <- merge(merged1,hitcnt_dataByBlock)
+merged1 <- merge(merged1,misscnt_dataByBlock)
+merged1 <- merge(merged1,facnt_dataByBlock)
+
+ExpData_ByBlock  <- subset(merged1,select=c(subject,condition,Block,UncuedSwitch,CuedSwitch,
+                                            noSwitchToSound,RTimeToSound))
+##now that i have allt eh block data separated into long format, i need to summarize it
+ExpData_ByBlock_means <- ddply(.data=ExpData_ByBlock,.(condition,Block),summarize,
+                               switchcnt_tosound.mean=mean(CuedSwitch),switchcnt_tosound.sd=sd(CuedSwitch),
+                               switchcnt_extra.mean=mean(UncuedSwitch),switchcnt_extra.sd=sd(UncuedSwitch))
+
+##now i need the block data to be summarized for the model
+ModelData_ByBlock_means <- ddply(.data=model_Utility_byBlock,.(condition,Block,red_reward,egs,blue_reward),summarize,
+                                 switchcnt_tosound.mean=mean(switchcnt_tosound),switchcnt_tosound.sd=sd(switchcnt_tosound),
+                                 switchcnt_extra.mean=mean(switchcnt_extra),switchcnt_extra.sd=sd(switchcnt_extra))
+
+
+#to get hte confidence interval you need the sqrt(number of subjects)
+ExpData_ByBlock_means$toSound.ci <- 2 * ExpData_ByBlock_means$switchcnt_tosound.sd / sqrt(17)
+ModelData_ByBlock_means$toSound.ci <- 2 * ModelData_ByBlock_means$switchcnt_tosound.sd / sqrt(17)
+ExpData_ByBlock_means$to.noSound.ci <- 2 * ExpData_ByBlock_means$switchcnt_extra.sd / sqrt(17)
+ModelData_ByBlock_means$to.noSound.ci <- 2 * ModelData_ByBlock_means$switchcnt_extra.sd / sqrt(17)
+
+###new function for doing the analysis by Block
+##  This function analyses the fit of the model at the block level. 
+### The reported fits are of the blocks in each condition at teh specified parameters
+CalculateFits_ByBlock <- function(modeldf, expdf, path) {
+  #sink outputs to the speciefied file instead of the console
+  sink(path)
+  
+  #start the loop for each blue_reward
+  for (blue in unique(modeldf$blue_reward)) {
+    dummyblue <- subset(modeldf, blue_reward==blue)
+    #nest the loop for each RED_Reward
+    for(red in unique(dummyblue$red_reward)){
+      dummyRed <- subset(dummyblue,red_reward==red)
+      #nest again for each condition
+      for(EGS in unique(dummyRed$egs)){
+        dummyegs <- subset(dummyRed,egs==EGS)
+          for(COND in unique(dummyegs$condition)){
+          dummyCondition_model  <- subset(dummyegs,condition==COND)
+          dummyCondition_exp  <- subset(expdf,condition==COND)
+          #this sub-section calculates the fits for the switch_cnt variable
+          cat("blue_reward =", blue, " Red Reward =", red, " EGS =", EGS," Condition",COND, "Switches to Sound",
+              "r^2 = ",cor(dummyCondition_model$switchcnt_tosound.mean,dummyCondition_exp$switchcnt_tosound.mean),
+              "RMSD = ", rmsd(dummyCondition_model$switchcnt_tosound.mean,dummyCondition_exp$switchcnt_tosound.mean),
+              fill=T)
+          GoodFits <- InRange(dummyCondition_model$switchcnt_tosound.mean, dummyCondition_exp$switchcnt_tosound.mean - dummyCondition_exp$toSound.ci, 
+                              dummyCondition_exp$switchcnt_tosound.mean + dummyCondition_exp$toSound.ci)
+          cat("  Number of model points in CI for", blue,"/",red,"/",EGS,"/",COND,"= ", GoodFits)
+          if (GoodFits == 4)
+            cat(" *************")
+          if (GoodFits == 3)
+            cat(" +++++++++++++")
+          cat(fill=T)
+          #this subsection calculates the fits for the extra switches
+          cat("blue_reward =", blue, " Red Reward =", red, " EGS =",EGS," Cond= ",COND,"Switches to No Sound",
+              "r^2 = ",cor(dummyCondition_model$switchcnt_extra.mean,dummyCondition_exp$switchcnt_extra.mean),
+              "RMSD = ", rmsd(dummyCondition_model$switchcnt_extra.mean,dummyCondition_exp$switchcnt_extra.mean),
+              fill=T)
+          GoodFits <- InRange(dummyCondition_model$switchcnt_extra.mean, dummyCondition_exp$switchcnt_extra.mean - dummyCondition_exp$to.noSound.ci, 
+                              dummyCondition_exp$switchcnt_extra.mean + dummyCondition_exp$to.noSound.ci)
+          cat("  Number of model points in CI for", blue,"/",red,"/",EGS,"/",COND,"= ", GoodFits)
+          if (GoodFits == 4)
+            cat(" *************")
+          if (GoodFits == 3)
+            cat(" +++++++++++++")
+          cat(fill=T)
+          cat(fill=T)
+        }
+      }
+    }
+  } 
+}
+###CALCULATE THE FITS FOR THE MODEL USING THE NEW FUNCTION
+CalculateFits_ByBlock(ModelData_ByBlock_means,ExpData_ByBlock_means,"~/GMU/Lab/Trust/Spring 2014/Analysis files/Spr14_fits_byBlock_ total trials by condition.txt")
+
+summary(ExpData_ByBlock)
+##generate graphs to see what they look like. 
+# overlay_to_sound <- ggplot(ExpData, aes(x=condition,y=switchcnt_tosound)) + theme_bw(base_size = 18)
+# overlay_to_sound <- overlay_to_sound + stat_summary(fun.y="mean", geom="bar",fill="dark grey")
+# overlay_to_sound <- overlay_to_sound + stat_summary(fun.data=mean_cl_boot, geom="errorbar", width = .25)
+# overlay_to_sound <- overlay_to_sound + geom_point(data=bestfit, aes(y=switchcnt_tosound.mean, x= factor(condition)),size=4)
+# overlay_to_sound <- overlay_to_sound + labs(title="BestFits noWait-:u2 - blue:-14 red:14 egs.4",y="Cued Switches", x="Condition")
+# print(overlay_to_sound)
+
+
+graph_by_condition <- function(model.df,exp.df,DV){
+  if(DV=="Cued"){
+    ##selection for DV based on case structure
+    ## then separate different graphs by condition
+    for (COND in unique(model.df$condition)){
+      condName <- as.data.frame(strsplit(as.character(COND),"/"))
+      
+      dummyCond  <- subset(model.df,condition == COND)
+      
+      ovly_fits_by_block_CS  <- ggplot(exp.df,aes(x=Block,y=CuedSwitch))+ theme_bw(base_size = 18)
+      ovly_fits_by_block_CS <- ovly_fits_by_block_CS + stat_summary(fun.y="mean", geom="bar",fill="dark grey")
+      ovly_fits_by_block_CS <- ovly_fits_by_block_CS + stat_summary(fun.data=mean_cl_boot, geom="errorbar", width = .25)
+      ovly_fits_by_block_CS <- ovly_fits_by_block_CS + geom_line(data=dummyCond, aes(x=Block,y=switchcnt_tosound.mean,colour=factor(egs)))
+      ovly_fits_by_block_CS <- ovly_fits_by_block_CS + facet_grid(red_reward ~ blue_reward,labeller=label_both)
+      ovly_fits_by_block_CS <- ovly_fits_by_block_CS + labs(title=paste(COND,"---",DV),y="Cued Switches", x="Block")
+      print(ovly_fits_by_block_CS)
+      ggsave(paste("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/",condName[1,],"-",condName[2,],"---",DV,".png"),height=9,width=16,dpi=300)
+    }
+  }else{
+    if(DV=="Uncued"){
+      for (COND in unique(model.df$condition)){
+        condName <- as.data.frame(strsplit(as.character(COND),"/"))
+        dummyCond  <- subset(model.df,condition == COND)
+        ovly_fits_by_block_CS  <- ggplot(exp.df,aes(x=Block,y=UncuedSwitch))+ theme_bw(base_size = 18)
+        ovly_fits_by_block_CS <- ovly_fits_by_block_CS + stat_summary(fun.y="mean", geom="bar",fill="dark grey")
+        ovly_fits_by_block_CS <- ovly_fits_by_block_CS + stat_summary(fun.data=mean_cl_boot, geom="errorbar", width = .25)
+        ovly_fits_by_block_CS <- ovly_fits_by_block_CS + geom_line(data=dummyCond, aes(x=Block,y=switchcnt_extra.mean,colour=factor(egs)))
+        ovly_fits_by_block_CS <- ovly_fits_by_block_CS + facet_grid(red_reward ~ blue_reward,labeller=label_both)
+        ovly_fits_by_block_CS <- ovly_fits_by_block_CS + labs(title=paste(COND,"---",DV),y="Cued Switches", x="Block")
+        print(ovly_fits_by_block_CS)
+        #cat("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/",COND,"---",DV,".png")
+        ggsave(paste("~/GMU/Lab/Trust/Spring 2014/graphs/UL_model/",condName[1,],"-",condName[2,],"---",DV,".png"),height=9,width=16,dpi=300)
+      }
+    }
+  }
+}
+
+graph_by_condition(ModelData_ByBlock_means,ExpData_ByBlock,"Cued")
+graph_by_condition(ModelData_ByBlock_means,ExpData_ByBlock,"Uncued")
