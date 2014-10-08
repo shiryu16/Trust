@@ -328,3 +328,23 @@ str(EmpericData)
 
 
 ##analyze the block data by participant in order to identify if later participants are in fact driving the abnormallities
+
+
+
+##analyze the score by block and condition. i wanna see if there are declines. 
+##First read the data
+Raw.data <- read.csv("~/GMU/Lab/Trust/Spring 2014/Analysis files/trust_overview.7.10.2014.csv")
+str(Raw.data)
+Raw.data$condition <- as.factor(paste(Raw.data$intended_hitrate,"/",Raw.data$intended_falsealarmrate))
+sub.raw  <- subset(Raw.data,select=c(blockscore1,blockscore2,blockscore3,blockscore4,subject,condition))
+
+##reshape for analysis
+long.sub.score  <- reshape(sub.raw,varying=c("blockscore1","blockscore2","blockscore3","blockscore4"),
+                           v.names="score",timevar="block",times=c("1","2","3","4"),direction="long")
+
+##plot the matrix of boxplots
+score_by_block  <- ggplot(long.sub.score,aes(block,score)) + geom_boxplot() + 
+                    facet_wrap(~condition) + stat_summary(aes(group=condition),fun.y=mean,geom="line",colour="blue")
+print(score_by_block)
+ggsave("~/GMU/Lab/Trust/Spring 2014/graphs/Score by Block.png")
+                          
